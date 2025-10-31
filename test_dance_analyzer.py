@@ -47,8 +47,7 @@ class TestDanceMovementAnalyzer(unittest.TestCase):
         results = self.analyzer.process_video(
             self.test_video_path,
             self.output_video_path,
-            draw_skeleton=True,
-            frame_skip=5  # Process every 5th frame for faster testing
+            draw_skeleton=True
         )
         
         # Check that results contain expected keys
@@ -77,8 +76,7 @@ class TestDanceMovementAnalyzer(unittest.TestCase):
         """Test keypoint extraction accuracy"""
         results = self.analyzer.process_video(
             self.test_video_path,
-            self.output_video_path,
-            frame_skip=5  # Process every 5th frame for faster testing
+            self.output_video_path
         )
         
         keypoint_data = self.analyzer.get_keypoint_data()
@@ -114,8 +112,7 @@ class TestDanceMovementAnalyzer(unittest.TestCase):
         """Test movement statistics calculation"""
         self.analyzer.process_video(
             self.test_video_path,
-            self.output_video_path,
-            frame_skip=5  # Process every 5th frame for faster testing
+            self.output_video_path
         )
         
         stats = self.analyzer.get_movement_statistics()
@@ -133,8 +130,7 @@ class TestDanceMovementAnalyzer(unittest.TestCase):
         """Test output video format consistency"""
         results = self.analyzer.process_video(
             self.test_video_path,
-            self.output_video_path,
-            frame_skip=5  # Process every 5th frame for faster testing
+            self.output_video_path
         )
         
         # Compare input and output properties
@@ -162,8 +158,7 @@ class TestDanceMovementAnalyzer(unittest.TestCase):
         """Test the convenience function wrapper"""
         results = analyze_dance_video(
             self.test_video_path,
-            self.output_video_path,
-            frame_skip=5  # Process every 5th frame for faster testing
+            self.output_video_path
         )
         
         # Check that results include movement statistics

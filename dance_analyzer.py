@@ -32,8 +32,7 @@ class DanceMovementAnalyzer:
     def process_video(self, 
                      input_path: str, 
                      output_path: str,
-                     draw_skeleton: bool = True,
-                     frame_skip: int = 1) -> dict:
+                     draw_skeleton: bool = True) -> dict:
         
         logger.info(f"Processing video: {input_path}")
         
@@ -50,9 +49,13 @@ class DanceMovementAnalyzer:
         
         logger.info(f"Video properties - FPS: {fps}, Size: {width}x{height}, Frames: {total_frames}")
         
-        # Initialize video writer
+        # Initialize video writers for BOTH outputs
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+        out_overlay = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+        
+        # Create skeleton-only output path
+        skeleton_only_path = output_path.replace('.mp4', '_skeleton_only.mp4')
+        out_skeleton = cv2.VideoWriter(skeleton_only_path, fourcc, fps, (width, height))
         
         frame_count = 0
         detected_frames = 0
@@ -67,21 +70,28 @@ class DanceMovementAnalyzer:
                 # Convert BGR to RGB for MediaPipe
                 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 
-                # Only process every N frames (frame_skip parameter)
-                if frame_count % frame_skip == 0:
-                    # Process frame with MediaPipe Pose
-                    results = self.pose.process(rgb_frame)
-                else:
-                    results = None
+                # Process ALL frames (continuous, no skipping)
+                results = self.pose.process(rgb_frame)
+                
+                # Create skeleton-only frame (black background)
+                skeleton_frame = np.zeros_like(frame)
                 
                 # Draw skeleton if pose detected
                 if results and results.pose_landmarks:
                     detected_frames += 1
                     
                     if draw_skeleton:
-                        # Draw pose landmarks on the frame
+                        # Draw pose landmarks on original frame (overlay)
                         self.mp_drawing.draw_landmarks(
                             frame,
+                            results.pose_landmarks,
+                            self.mp_pose.POSE_CONNECTIONS,
+                            landmark_drawing_spec=self.mp_drawing_styles.get_default_pose_landmarks_style()
+                        )
+                        
+                        # Draw pose landmarks on black background (skeleton only)
+                        self.mp_drawing.draw_landmarks(
+                            skeleton_frame,
                             results.pose_landmarks,
                             self.mp_pose.POSE_CONNECTIONS,
                             landmark_drawing_spec=self.mp_drawing_styles.get_default_pose_landmarks_style()
@@ -91,8 +101,9 @@ class DanceMovementAnalyzer:
                     keypoints = self._extract_keypoints(results.pose_landmarks, frame_count)
                     self.keypoint_data.append(keypoints)
                 
-                # Write frame to output video
-                out.write(frame)
+                # Write frames to BOTH output videos
+                out_overlay.write(frame)
+                out_skeleton.write(skeleton_frame)
                 frame_count += 1
                 
                 if frame_count % 30 == 0:
@@ -100,7 +111,8 @@ class DanceMovementAnalyzer:
         
         finally:
             cap.release()
-            out.release()
+            out_overlay.release()
+            out_skeleton.release()
         
         # Calculate analysis metrics
         detection_rate = (detected_frames / frame_count * 100) if frame_count > 0 else 0
@@ -108,6 +120,7 @@ class DanceMovementAnalyzer:
         analysis_results = {
             'input_file': input_path,
             'output_file': output_path,
+            'skeleton_only_file': skeleton_only_path,
             'total_frames': frame_count,
             'detected_frames': detected_frames,
             'detection_rate': detection_rate,
@@ -117,6 +130,7 @@ class DanceMovementAnalyzer:
         }
         
         logger.info(f"Processing complete - Detection rate: {detection_rate:.2f}%")
+        logger.info(f"Output files: {output_path} and {skeleton_only_path}")
         return analysis_results
     
     def _extract_keypoints(self, pose_landmarks, frame_number: int) -> dict:
@@ -180,8 +194,7 @@ class DanceMovementAnalyzer:
 def analyze_dance_video(input_path: str, 
                        output_path: str,
                        min_detection_confidence: float = 0.5,
-                       min_tracking_confidence: float = 0.5,
-                       frame_skip: int = 1) -> dict:
+                       min_tracking_confidence: float = 0.5) -> dict:
    
     analyzer = DanceMovementAnalyzer(
         min_detection_confidence=min_detection_confidence,
@@ -189,7 +202,7 @@ def analyze_dance_video(input_path: str,
     )
     
     try:
-        results = analyzer.process_video(input_path, output_path, frame_skip=frame_skip)
+        results = analyzer.process_video(input_path, output_path)
         movement_stats = analyzer.get_movement_statistics()
         results['movement_statistics'] = movement_stats
         return results
