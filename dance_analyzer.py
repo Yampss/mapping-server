@@ -32,7 +32,8 @@ class DanceMovementAnalyzer:
     def process_video(self, 
                      input_path: str, 
                      output_path: str,
-                     draw_skeleton: bool = True) -> dict:
+                     draw_skeleton: bool = True,
+                     frame_skip: int = 1) -> dict:
         
         logger.info(f"Processing video: {input_path}")
         
@@ -66,11 +67,15 @@ class DanceMovementAnalyzer:
                 # Convert BGR to RGB for MediaPipe
                 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 
-                # Process frame with MediaPipe Pose
-                results = self.pose.process(rgb_frame)
+                # Only process every N frames (frame_skip parameter)
+                if frame_count % frame_skip == 0:
+                    # Process frame with MediaPipe Pose
+                    results = self.pose.process(rgb_frame)
+                else:
+                    results = None
                 
                 # Draw skeleton if pose detected
-                if results.pose_landmarks:
+                if results and results.pose_landmarks:
                     detected_frames += 1
                     
                     if draw_skeleton:
@@ -175,7 +180,8 @@ class DanceMovementAnalyzer:
 def analyze_dance_video(input_path: str, 
                        output_path: str,
                        min_detection_confidence: float = 0.5,
-                       min_tracking_confidence: float = 0.5) -> dict:
+                       min_tracking_confidence: float = 0.5,
+                       frame_skip: int = 1) -> dict:
    
     analyzer = DanceMovementAnalyzer(
         min_detection_confidence=min_detection_confidence,
@@ -183,7 +189,7 @@ def analyze_dance_video(input_path: str,
     )
     
     try:
-        results = analyzer.process_video(input_path, output_path)
+        results = analyzer.process_video(input_path, output_path, frame_skip=frame_skip)
         movement_stats = analyzer.get_movement_statistics()
         results['movement_statistics'] = movement_stats
         return results
