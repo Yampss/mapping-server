@@ -46,14 +46,17 @@ temp/
 uploads/
 outputs/
 results/
+test_output/
 
 # Git
 .git/
 .gitignore
 
-# Documentation
-*.md
+# Documentation (exclude most, but keep essential deployment docs)
+archived/
 docs/
+tesfile.mp4
 
 # Docker
 .dockerignore
+docker-compose.yml
