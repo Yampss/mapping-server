@@ -1,18 +1,7 @@
 # Dance Movement Analysis Server
 
-A cloud-based AI/ML server that processes dance videos for body pose and movement analysis using MediaPipe and OpenCV. The server detects 33 body keypoints, overlays skeleton visualization, and provides detailed movement analytics through a REST API.
+A cloud-based AI/ML server that processes dance videos for body pose and movement analysis. The server detects 33 body keypoints, overlays skeleton visualization, and provides detailed movement analytics through a REST API.
 
-## Features
-
-- **Pose Detection**: Real-time body keypoint detection using MediaPipe Pose (BlazePose model)
-- **Dual Video Output**: 
-  - Original video with skeleton overlay
-  - Skeleton-only video on black background
-- **REST API**: FastAPI-based endpoints for video upload and analysis
-- **Asynchronous Processing**: Background job processing for efficient handling
-- **Containerized**: Docker support for easy deployment
-- **Cloud-Ready**: Deployment scripts for GCP Compute Engine
-- **Comprehensive Analytics**: Movement statistics, detection rates, and keypoint data
 
 ## Requirements
 
@@ -212,46 +201,6 @@ When processing a video, the system generates TWO output videos:
 
 Both files are available for download via the API.
 
-## Architecture
-
-```
-┌─────────────────┐
-│  Client/User    │
-└────────┬────────┘
-         │ HTTP/REST
-         ▼
-┌────────────────┐
-│   FastAPI      │
-│   API Server   │
-└────────┬───────┘
-         │ Async Tasks
-         ▼
-┌────────────────┐
-│ Dance Analyzer │
-│  (MediaPipe +  │
-│    OpenCV)     │
-└────────┬───────┘
-         │
-         ▼
-┌────────────────┐
-│  Video Output  │
-│  1. Overlay    │
-│  2. Skeleton   │
-└────────────────┘
-```
-
-## MediaPipe Pose Detection
-
-The system uses Google's MediaPipe Pose (BlazePose) model which detects 33 body landmarks:
-
-- Face: nose, eyes, ears, mouth
-- Torso: shoulders, hips
-- Arms: elbows, wrists, hands
-- Legs: knees, ankles, feet
-
-Each landmark includes:
-- `x, y, z`: 3D coordinates (normalized 0-1)
-- `visibility`: Confidence score (0-1)
 
 ## Configuration
 
@@ -331,62 +280,6 @@ Speed depends on:
 - Moderate lighting: 80-90% detection rate
 - Dim lighting or occlusions: 70-85% detection rate
 
-## Troubleshooting
-
-### Container won't start
-```bash
-# Check logs
-docker logs dance-analysis-server
-
-# Verify port availability
-netstat -tulpn | grep 8000
-```
-
-### Low detection rate
-- Ensure good lighting in videos
-- Check that person is clearly visible and not too far from camera
-- Try adjusting confidence parameters (lower for more detections)
-
-### Out of memory
-- Reduce video resolution before uploading
-- Process shorter video segments
-- Increase instance memory (for cloud deployments)
-
-## File Structure
-
-```
-dance-analysis-server/
-├── dance_analyzer.py           # Core pose detection & analysis
-├── api_server.py              # FastAPI REST API server
-├── test_dance_analyzer.py     # Unit tests
-├── requirements.txt           # Python dependencies
-├── Dockerfile                 # Docker container definition
-├── docker-compose.yml         # Docker Compose configuration
-├── deploy_gcp.sh             # GCP deployment script
-├── .dockerignore             # Docker build exclusions
-├── .gitignore                # Git exclusions
-├── README.md                 # This file
-└── DEPLOYMENT_INSTRUCTIONS.md # Deployment guide
-```
-
-## License
-
-MIT License
-
-## Credits
-
-- MediaPipe by Google
-- OpenCV
-- FastAPI by Sebastián Ramírez
-
-## Support
-
-For issues and questions:
-- Check the troubleshooting section above
-- Review API documentation at `/docs`
-- Check logs: `docker logs dance-analysis-server`
-
 ---
 
-**Built for dance movement analysis and pose estimation**
 
