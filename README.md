@@ -115,37 +115,6 @@ python test_dance_analyzer.py
 pytest test_dance_analyzer.py --cov=dance_analyzer --cov-report=html
 ```
 
-## Cloud Deployment
-
-See `DEPLOYMENT_INSTRUCTIONS.md` for detailed deployment guide to:
-- Google Cloud Platform (GCP) Compute Engine
-- AWS EC2
-- Other cloud providers
-
-Quick GCP deployment:
-
-```bash
-
-gcloud compute instances create dance-analysis-vm \
-    --machine-type=e2-medium \
-    --zone=us-central1-a \
-    --image-family=ubuntu-2204-lts \
-    --image-project=ubuntu-os-cloud \
-    --boot-disk-size=20GB
-
-
-gcloud compute scp --recurse \
-  dance_analyzer.py api_server.py requirements.txt \
-  Dockerfile docker-compose.yml deploy_gcp.sh \
-  dance-analysis-vm:~/dance-analysis-server/ \
-  --zone=us-central1-a
-
-
-gcloud compute ssh dance-analysis-vm --zone=us-central1-a
-cd ~/dance-analysis-server
-chmod +x deploy_gcp.sh
-./deploy_gcp.sh
-```
 
 ## Performance
 
