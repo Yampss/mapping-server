@@ -85,122 +85,6 @@ FastAPI provides automatic interactive documentation:
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
 
-### Usage Examples
-
-#### 1. Upload a video for analysis
-
-```bash
-curl -X POST "http://localhost:8000/api/v1/analyze" \
-  -F "video=@dance.mp4" \
-  -F "min_detection_confidence=0.5" \
-  -F "min_tracking_confidence=0.5"
-```
-
-**Response:**
-```json
-{
-  "job_id": "550e8400-e29b-41d4-a716-446655440000",
-  "status": "queued",
-  "message": "Video uploaded successfully. Analysis started.",
-  "result_url": "/api/v1/status/550e8400-e29b-41d4-a716-446655440000"
-}
-```
-
-#### 2. Check job status
-
-```bash
-curl "http://localhost:8000/api/v1/status/550e8400-e29b-41d4-a716-446655440000"
-```
-
-**Response (processing):**
-```json
-{
-  "job_id": "550e8400-e29b-41d4-a716-446655440000",
-  "status": "processing",
-  "created_at": "2025-11-02T10:30:00"
-}
-```
-
-**Response (completed):**
-```json
-{
-  "job_id": "550e8400-e29b-41d4-a716-446655440000",
-  "status": "completed",
-  "created_at": "2025-11-02T10:30:00",
-  "completed_at": "2025-11-02T10:32:45",
-  "results": {
-    "total_frames": 1373,
-    "detected_frames": 1373,
-    "detection_rate": 100.0,
-    "fps": 30,
-    "resolution": [720, 1280]
-  },
-  "output_video_url": "/api/v1/download/550e8400-e29b-41d4-a716-446655440000"
-}
-```
-
-#### 3. Download analyzed videos
-
-```bash
-# Download overlay version (original + skeleton)
-curl -O "http://localhost:8000/api/v1/download/550e8400-e29b-41d4-a716-446655440000"
-
-# Get JSON results
-curl "http://localhost:8000/api/v1/results/550e8400-e29b-41d4-a716-446655440000"
-```
-
-### Python Example
-
-```python
-import requests
-import time
-
-# Upload video
-url = "http://localhost:8000/api/v1/analyze"
-files = {"video": open("dance.mp4", "rb")}
-data = {"min_detection_confidence": 0.5}
-
-response = requests.post(url, files=files, data=data)
-job_id = response.json()["job_id"]
-print(f"Job ID: {job_id}")
-
-# Poll for completion
-status_url = f"http://localhost:8000/api/v1/status/{job_id}"
-while True:
-    status = requests.get(status_url).json()
-    print(f"Status: {status['status']}")
-    
-    if status["status"] == "completed":
-        break
-    elif status["status"] == "failed":
-        print(f"Error: {status.get('error')}")
-        exit(1)
-    
-    time.sleep(5)
-
-# Download result
-download_url = f"http://localhost:8000/api/v1/download/{job_id}"
-result = requests.get(download_url)
-with open("analyzed_dance.mp4", "wb") as f:
-    f.write(result.content)
-
-print("Analysis complete! Video saved as analyzed_dance.mp4")
-```
-
-## Output Files
-
-When processing a video, the system generates TWO output videos:
-
-1. **Overlay Version** (`output.mp4`)
-   - Original video with skeleton overlay
-   - Shows dancer with pose landmarks drawn on top
-
-2. **Skeleton-Only Version** (`output_skeleton_only.mp4`)
-   - Skeleton dancing on black background
-   - Shows only the detected pose without original video
-
-Both files are available for download via the API.
-
 
 ## Configuration
 
@@ -241,7 +125,7 @@ See `DEPLOYMENT_INSTRUCTIONS.md` for detailed deployment guide to:
 Quick GCP deployment:
 
 ```bash
-# 1. Create VM instance
+
 gcloud compute instances create dance-analysis-vm \
     --machine-type=e2-medium \
     --zone=us-central1-a \
@@ -249,14 +133,14 @@ gcloud compute instances create dance-analysis-vm \
     --image-project=ubuntu-os-cloud \
     --boot-disk-size=20GB
 
-# 2. Upload files
+
 gcloud compute scp --recurse \
   dance_analyzer.py api_server.py requirements.txt \
   Dockerfile docker-compose.yml deploy_gcp.sh \
   dance-analysis-vm:~/dance-analysis-server/ \
   --zone=us-central1-a
 
-# 3. Deploy
+
 gcloud compute ssh dance-analysis-vm --zone=us-central1-a
 cd ~/dance-analysis-server
 chmod +x deploy_gcp.sh
